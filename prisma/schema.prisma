@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  moduleFormat    = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Carrera {
+  id_carrera     Int        @id @default(autoincrement())
+  nombre_carrera String     @unique @db.VarChar(100)
+  codigo_carrera String     @unique @db.VarChar(10)
+
+  estudiantes    Estudiante[]
+  proyectos      Proyecto[]
+}
+
+model Estudiante {
+  id_estudiante Int      @id @default(autoincrement())
+  ci            String   @unique @db.VarChar(15)
+  nombre        String   @db.VarChar(80)
+  apellido      String   @db.VarChar(80)
+  telefono      String?  @db.VarChar(15)
+  correo        String?  @db.VarChar(100)
+  id_carrera    Int
+
+  carrera       Carrera  @relation(fields: [id_carrera], references: [id_carrera])
+  proyectos     ProyectoEstudiante[]
+}
+
+model Docente {
+  id_docente   Int       @id @default(autoincrement())
+  ci           String    @unique @db.VarChar(15)
+  nombre       String    @db.VarChar(80)
+  apellido     String    @db.VarChar(80)
+  telefono     String?   @db.VarChar(15)
+  correo       String?   @db.VarChar(100)
+  especialidad String?   @db.VarChar(100)
+
+  proyectos    Proyecto[]
+}
+
+model Proyecto {
+  id_proyecto    Int      @id @default(autoincrement())
+  titulo         String   @db.VarChar(200)
+  descripcion    String?
+  area_tematica  String?  @db.VarChar(100)
+  fecha_registro DateTime @db.Date
+  id_docente     Int
+  id_carrera     Int
+
+  docente        Docente  @relation(fields: [id_docente], references: [id_docente])
+  carrera        Carrera  @relation(fields: [id_carrera], references: [id_carrera])
+  estudiantes    ProyectoEstudiante[]
+  evaluaciones   Evaluacion[]
+}
+
+model ProyectoEstudiante {
+  id_proyecto   Int
+  id_estudiante Int
+
+  proyecto      Proyecto   @relation(fields: [id_proyecto], references: [id_proyecto])
+  estudiante    Estudiante @relation(fields: [id_estudiante], references: [id_estudiante])
+
+  @@id([id_proyecto, id_estudiante])
+}
+
+model Jurado {
+  id_jurado    Int     @id @default(autoincrement())
+  ci           String  @unique @db.VarChar(15)
+  nombre       String  @db.VarChar(80)
+  apellido     String  @db.VarChar(80)
+  institucion  String? @db.VarChar(150)
+  especialidad String? @db.VarChar(100)
+  telefono     String? @db.VarChar(15)
+  correo       String? @db.VarChar(100)
+
+  evaluaciones Evaluacion[]
+}
+
+model Criterio {
+  id_criterio     Int      @id @default(autoincrement())
+  nombre_criterio String   @unique @db.VarChar(100)
+  descripcion     String?
+  puntaje_maximo  Decimal  @db.Decimal(5, 2)
+
+  detalles        DetalleEvaluacion[]
+}
+
+model Evaluacion {
+  id_evaluacion    Int      @id @default(autoincrement())
+  id_jurado        Int
+  id_proyecto      Int
+  fecha_evaluacion DateTime @db.Date
+  observaciones    String?
+  puntaje_total    Decimal? @db.Decimal(6, 2)
+
+  jurado           Jurado   @relation(fields: [id_jurado], references: [id_jurado])
+  proyecto         Proyecto @relation(fields: [id_proyecto], references: [id_proyecto])
+  detalles         DetalleEvaluacion[]
+
+  @@unique([id_jurado, id_proyecto])
+}
+
+model DetalleEvaluacion {
+  id_detalle       Int     @id @default(autoincrement())
+  id_evaluacion    Int
+  id_criterio      Int
+  puntaje_obtenido Decimal @db.Decimal(5, 2)
+
+  evaluacion       Evaluacion @relation(fields: [id_evaluacion], references: [id_evaluacion])
+  criterio         Criterio   @relation(fields: [id_criterio], references: [id_criterio])
+
+  @@unique([id_evaluacion, id_criterio])
+}
