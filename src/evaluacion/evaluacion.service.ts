@@ -31,7 +31,7 @@ export class EvaluacionService {
       },
     });
 
-    await this.actualizarPuntajeTotal(evaluacion.id_evaluacion);
+    await this.recalcularPuntajeTotal(evaluacion.id_evaluacion);
 
     return this.findOne(evaluacion.id_evaluacion);
   }
@@ -124,7 +124,7 @@ export class EvaluacionService {
       },
     });
 
-    await this.actualizarPuntajeTotal(id);
+    await this.recalcularPuntajeTotal(id);
 
     return this.findOne(id);
   }
@@ -135,7 +135,7 @@ export class EvaluacionService {
     });
   }
 
-  private async actualizarPuntajeTotal(idEvaluacion: number) {
+  async recalcularPuntajeTotal(idEvaluacion: number) {
     const detalles = await this.prisma.detalleEvaluacion.findMany({
       where: { id_evaluacion: idEvaluacion },
     });

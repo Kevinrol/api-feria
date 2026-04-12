@@ -1,0 +1,1695 @@
+openapi: 3.0.3
+info:
+  title: API Feria
+  license:
+    name: UNLICENSED
+    url: https://unlicense.org/
+  description: |
+    API REST (NestJS + Prisma) para gestión de carreras, estudiantes, docentes, proyectos,
+    jurados, criterios, evaluaciones y relaciones proyecto–estudiante.
+
+    Las fechas almacenadas como `Date` en PostgreSQL se envían/reciben como string ISO 8601
+    (típicamente `YYYY-MM-DD` para campos solo-fecha).
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:3000
+    description: Servidor local (variable de entorno `PORT`, por defecto 3000)
+
+# La API no usa autenticación por ahora; declara explícitamente endpoints públicos.
+security: []
+
+tags:
+  - name: App
+    description: Raíz de la aplicación
+  - name: Carrera
+    description: Carreras académicas
+  - name: Estudiante
+    description: Estudiantes y asignación a proyectos
+  - name: Docente
+    description: Docentes tutores
+  - name: Proyecto
+    description: Proyectos de feria
+  - name: Jurado
+    description: Miembros del jurado
+  - name: Criterio
+    description: Criterios de evaluación
+  - name: Evaluacion
+    description: Evaluaciones de proyectos por jurado
+  - name: DetalleEvaluacion
+    description: Puntajes por criterio dentro de una evaluación
+  - name: ProyectoEstudiante
+    description: Relación N:M proyecto–estudiante
+
+paths:
+  /:
+    get:
+      tags: [App]
+      summary: Comprobación de servicio
+      operationId: appGetHello
+      responses:
+        "200":
+          description: Texto de bienvenida
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Hello World!
+
+  /carrera:
+    get:
+      tags: [Carrera]
+      summary: Listar carreras
+      operationId: carreraFindAll
+      responses:
+        "200":
+          description: Lista (puede incluir `estudiantes` y `proyectos` anidados)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Carrera"
+    post:
+      tags: [Carrera]
+      summary: Crear carrera
+      operationId: carreraCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCarrera"
+      responses:
+        "201":
+          description: Carrera creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Carrera"
+
+  /carrera/{id}:
+    get:
+      tags: [Carrera]
+      summary: Obtener carrera por id
+      operationId: carreraFindOne
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Recurso o `null` si no existe
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Carrera"
+    patch:
+      tags: [Carrera]
+      summary: Actualizar carrera
+      operationId: carreraUpdate
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCarrera"
+      responses:
+        "200":
+          description: Carrera actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Carrera"
+    delete:
+      tags: [Carrera]
+      summary: Eliminar carrera
+      operationId: carreraRemove
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Registro eliminado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Carrera"
+
+  /carrera/codigo/{codigo}:
+    get:
+      tags: [Carrera]
+      summary: Buscar carrera por código
+      operationId: carreraFindByCodigo
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Carrera o `null`
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Carrera"
+
+  /estudiante:
+    get:
+      tags: [Estudiante]
+      summary: Listar estudiantes
+      operationId: estudianteFindAll
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Estudiante"
+    post:
+      tags: [Estudiante]
+      summary: Crear estudiante
+      operationId: estudianteCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEstudiante"
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Estudiante"
+
+  /estudiante/{id}:
+    get:
+      tags: [Estudiante]
+      summary: Obtener estudiante por id
+      operationId: estudianteFindOne
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Estudiante"
+    patch:
+      tags: [Estudiante]
+      summary: Actualizar estudiante
+      operationId: estudianteUpdate
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEstudiante"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Estudiante"
+    delete:
+      tags: [Estudiante]
+      summary: Eliminar estudiante
+      operationId: estudianteRemove
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Estudiante"
+
+  /estudiante/ci/{ci}:
+    get:
+      tags: [Estudiante]
+      summary: Buscar estudiante por CI
+      operationId: estudianteFindByCi
+      parameters:
+        - name: ci
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Estudiante"
+
+  /estudiante/carrera/{idCarrera}:
+    get:
+      tags: [Estudiante]
+      summary: Estudiantes por carrera
+      operationId: estudianteFindByCarrera
+      parameters:
+        - name: idCarrera
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Estudiante"
+
+  /estudiante/{idEstudiante}/proyecto/{idProyecto}:
+    post:
+      tags: [Estudiante]
+      summary: Asignar estudiante a proyecto
+      operationId: estudianteAsignarProyecto
+      parameters:
+        - name: idEstudiante
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Relación creada (forma según servicio)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProyectoEstudiante"
+    delete:
+      tags: [Estudiante]
+      summary: Quitar estudiante del proyecto
+      operationId: estudianteRemoverProyecto
+      parameters:
+        - name: idEstudiante
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProyectoEstudiante"
+
+  /docente:
+    get:
+      tags: [Docente]
+      summary: Listar docentes
+      operationId: docenteFindAll
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Docente"
+    post:
+      tags: [Docente]
+      summary: Crear docente
+      operationId: docenteCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocente"
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Docente"
+
+  /docente/{id}:
+    get:
+      tags: [Docente]
+      summary: Obtener docente por id
+      operationId: docenteFindOne
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Docente"
+    patch:
+      tags: [Docente]
+      summary: Actualizar docente
+      operationId: docenteUpdate
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDocente"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Docente"
+    delete:
+      tags: [Docente]
+      summary: Eliminar docente
+      operationId: docenteRemove
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Docente"
+
+  /docente/ci/{ci}:
+    get:
+      tags: [Docente]
+      summary: Buscar docente por CI
+      operationId: docenteFindByCi
+      parameters:
+        - name: ci
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Docente"
+
+  /docente/{id}/proyectos:
+    get:
+      tags: [Docente]
+      summary: Proyectos del docente
+      operationId: docenteProyectos
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Proyecto"
+
+  /proyecto:
+    get:
+      tags: [Proyecto]
+      summary: Listar proyectos
+      operationId: proyectoFindAll
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Proyecto"
+    post:
+      tags: [Proyecto]
+      summary: Crear proyecto
+      operationId: proyectoCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProyecto"
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proyecto"
+
+  /proyecto/{id}:
+    get:
+      tags: [Proyecto]
+      summary: Obtener proyecto por id
+      operationId: proyectoFindOne
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Proyecto"
+    patch:
+      tags: [Proyecto]
+      summary: Actualizar proyecto
+      operationId: proyectoUpdate
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProyecto"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proyecto"
+    delete:
+      tags: [Proyecto]
+      summary: Eliminar proyecto
+      operationId: proyectoRemove
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proyecto"
+
+  /proyecto/carrera/{idCarrera}:
+    get:
+      tags: [Proyecto]
+      summary: Proyectos por carrera
+      operationId: proyectoFindByCarrera
+      parameters:
+        - name: idCarrera
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Proyecto"
+
+  /proyecto/docente/{idDocente}:
+    get:
+      tags: [Proyecto]
+      summary: Proyectos por docente
+      operationId: proyectoFindByDocente
+      parameters:
+        - name: idDocente
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Proyecto"
+
+  /proyecto/{id}/estudiantes:
+    get:
+      tags: [Proyecto]
+      summary: Estudiantes asignados al proyecto
+      operationId: proyectoEstudiantes
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProyectoEstudiante"
+
+  /proyecto/{id}/evaluaciones:
+    get:
+      tags: [Proyecto]
+      summary: Evaluaciones del proyecto
+      operationId: proyectoEvaluaciones
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evaluacion"
+
+  /proyecto/{idProyecto}/estudiante/{idEstudiante}:
+    post:
+      tags: [Proyecto]
+      summary: Asignar estudiante al proyecto
+      operationId: proyectoAsignarEstudiante
+      parameters:
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: idEstudiante
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProyectoEstudiante"
+    delete:
+      tags: [Proyecto]
+      summary: Quitar estudiante del proyecto
+      operationId: proyectoRemoverEstudiante
+      parameters:
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: idEstudiante
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProyectoEstudiante"
+
+  /proyecto-estudiante:
+    get:
+      tags: [ProyectoEstudiante]
+      summary: Listar todas las relaciones proyecto–estudiante
+      operationId: proyectoEstudianteFindAll
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProyectoEstudiante"
+    post:
+      tags: [ProyectoEstudiante]
+      summary: Crear relación proyecto–estudiante
+      operationId: proyectoEstudianteCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProyectoEstudiante"
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProyectoEstudiante"
+
+  /proyecto-estudiante/proyecto/{idProyecto}:
+    get:
+      tags: [ProyectoEstudiante]
+      summary: Relaciones por proyecto
+      operationId: proyectoEstudianteByProyecto
+      parameters:
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProyectoEstudiante"
+
+  /proyecto-estudiante/estudiante/{idEstudiante}:
+    get:
+      tags: [ProyectoEstudiante]
+      summary: Relaciones por estudiante
+      operationId: proyectoEstudianteByEstudiante
+      parameters:
+        - name: idEstudiante
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProyectoEstudiante"
+
+  /proyecto-estudiante/proyecto/{idProyecto}/estudiante/{idEstudiante}:
+    get:
+      tags: [ProyectoEstudiante]
+      summary: Obtener una relación concreta
+      operationId: proyectoEstudianteFindOne
+      parameters:
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: idEstudiante
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProyectoEstudiante"
+        "404":
+          description: No encontrada
+    delete:
+      tags: [ProyectoEstudiante]
+      summary: Eliminar relación
+      operationId: proyectoEstudianteRemove
+      parameters:
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: idEstudiante
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProyectoEstudiante"
+
+  /jurado:
+    get:
+      tags: [Jurado]
+      summary: Listar jurados
+      operationId: juradoFindAll
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Jurado"
+    post:
+      tags: [Jurado]
+      summary: Crear jurado
+      operationId: juradoCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJurado"
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Jurado"
+
+  /jurado/{id}:
+    get:
+      tags: [Jurado]
+      summary: Obtener jurado por id
+      operationId: juradoFindOne
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Jurado"
+    patch:
+      tags: [Jurado]
+      summary: Actualizar jurado
+      operationId: juradoUpdate
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJurado"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Jurado"
+    delete:
+      tags: [Jurado]
+      summary: Eliminar jurado
+      operationId: juradoRemove
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Jurado"
+
+  /jurado/ci/{ci}:
+    get:
+      tags: [Jurado]
+      summary: Buscar jurado por CI
+      operationId: juradoFindByCi
+      parameters:
+        - name: ci
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Jurado"
+
+  /jurado/{id}/evaluaciones:
+    get:
+      tags: [Jurado]
+      summary: Evaluaciones del jurado
+      operationId: juradoEvaluaciones
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evaluacion"
+
+  /criterio:
+    get:
+      tags: [Criterio]
+      summary: Listar criterios
+      operationId: criterioFindAll
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Criterio"
+    post:
+      tags: [Criterio]
+      summary: Crear criterio
+      operationId: criterioCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCriterio"
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Criterio"
+
+  /criterio/{id}:
+    get:
+      tags: [Criterio]
+      summary: Obtener criterio por id
+      operationId: criterioFindOne
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Criterio"
+    patch:
+      tags: [Criterio]
+      summary: Actualizar criterio
+      operationId: criterioUpdate
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCriterio"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Criterio"
+    delete:
+      tags: [Criterio]
+      summary: Eliminar criterio
+      operationId: criterioRemove
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Criterio"
+
+  /evaluacion:
+    get:
+      tags: [Evaluacion]
+      summary: Listar evaluaciones
+      operationId: evaluacionFindAll
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evaluacion"
+    post:
+      tags: [Evaluacion]
+      summary: Crear evaluación (con detalles por criterio)
+      operationId: evaluacionCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEvaluacion"
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluacion"
+
+  /evaluacion/{id}:
+    get:
+      tags: [Evaluacion]
+      summary: Obtener evaluación por id
+      operationId: evaluacionFindOne
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                allOf:
+                  - $ref: "#/components/schemas/Evaluacion"
+    patch:
+      tags: [Evaluacion]
+      summary: Actualizar evaluación (opcionalmente reemplazar detalles)
+      operationId: evaluacionUpdate
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEvaluacion"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluacion"
+    delete:
+      tags: [Evaluacion]
+      summary: Eliminar evaluación
+      operationId: evaluacionRemove
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluacion"
+
+  /evaluacion/proyecto/{idProyecto}:
+    get:
+      tags: [Evaluacion]
+      summary: Evaluaciones de un proyecto
+      operationId: evaluacionByProyecto
+      parameters:
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evaluacion"
+
+  /evaluacion/jurado/{idJurado}:
+    get:
+      tags: [Evaluacion]
+      summary: Evaluaciones de un jurado
+      operationId: evaluacionByJurado
+      parameters:
+        - name: idJurado
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evaluacion"
+
+  /evaluacion/proyecto/{idProyecto}/promedio:
+    get:
+      tags: [Evaluacion]
+      summary: Promedio de puntajes totales por evaluación del proyecto
+      operationId: evaluacionPromedioProyecto
+      parameters:
+        - name: idProyecto
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Número (promedio)
+          content:
+            application/json:
+              schema:
+                type: number
+                format: float
+
+  /detalle-evaluacion:
+    get:
+      tags: [DetalleEvaluacion]
+      summary: Listar detalles de evaluación
+      operationId: detalleEvaluacionFindAll
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DetalleEvaluacion"
+    post:
+      tags: [DetalleEvaluacion]
+      summary: Crear detalle (recalcula puntaje total de la evaluación)
+      operationId: detalleEvaluacionCreate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDetalleEvaluacion"
+      responses:
+        "201":
+          description: Recurso creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetalleEvaluacion"
+
+  /detalle-evaluacion/evaluacion/{idEvaluacion}:
+    get:
+      tags: [DetalleEvaluacion]
+      summary: Detalles por id de evaluación
+      operationId: detalleEvaluacionByEvaluacion
+      parameters:
+        - name: idEvaluacion
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DetalleEvaluacion"
+
+  /detalle-evaluacion/{id}:
+    get:
+      tags: [DetalleEvaluacion]
+      summary: Obtener detalle por id
+      operationId: detalleEvaluacionFindOne
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetalleEvaluacion"
+        "404":
+          description: No encontrado
+    patch:
+      tags: [DetalleEvaluacion]
+      summary: Actualizar detalle (recalcula puntaje total)
+      operationId: detalleEvaluacionUpdate
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDetalleEvaluacion"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetalleEvaluacion"
+    delete:
+      tags: [DetalleEvaluacion]
+      summary: Eliminar detalle (recalcula puntaje total)
+      operationId: detalleEvaluacionRemove
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Respuesta correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetalleEvaluacion"
+
+components:
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      description: Identificador numérico
+      schema:
+        type: integer
+
+  schemas:
+    Carrera:
+      type: object
+      properties:
+        id_carrera:
+          type: integer
+        nombre_carrera:
+          type: string
+        codigo_carrera:
+          type: string
+        estudiantes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Estudiante"
+        proyectos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Proyecto"
+
+    CreateCarrera:
+      type: object
+      required: [nombre_carrera, codigo_carrera]
+      properties:
+        nombre_carrera:
+          type: string
+        codigo_carrera:
+          type: string
+
+    UpdateCarrera:
+      type: object
+      properties:
+        nombre_carrera:
+          type: string
+        codigo_carrera:
+          type: string
+
+    Estudiante:
+      type: object
+      properties:
+        id_estudiante:
+          type: integer
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        telefono:
+          type: string
+          nullable: true
+        correo:
+          type: string
+          nullable: true
+        id_carrera:
+          type: integer
+        carrera:
+          $ref: "#/components/schemas/Carrera"
+        proyectos:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProyectoEstudiante"
+
+    CreateEstudiante:
+      type: object
+      required: [ci, nombre, apellido, id_carrera]
+      properties:
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        telefono:
+          type: string
+        correo:
+          type: string
+        id_carrera:
+          type: integer
+
+    UpdateEstudiante:
+      type: object
+      properties:
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        telefono:
+          type: string
+        correo:
+          type: string
+        id_carrera:
+          type: integer
+
+    Docente:
+      type: object
+      properties:
+        id_docente:
+          type: integer
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        telefono:
+          type: string
+          nullable: true
+        correo:
+          type: string
+          nullable: true
+        especialidad:
+          type: string
+          nullable: true
+        proyectos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Proyecto"
+
+    CreateDocente:
+      type: object
+      required: [ci, nombre, apellido]
+      properties:
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        telefono:
+          type: string
+        correo:
+          type: string
+        especialidad:
+          type: string
+
+    UpdateDocente:
+      type: object
+      properties:
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        telefono:
+          type: string
+        correo:
+          type: string
+        especialidad:
+          type: string
+
+    Proyecto:
+      type: object
+      properties:
+        id_proyecto:
+          type: integer
+        titulo:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+        area_tematica:
+          type: string
+          nullable: true
+        fecha_registro:
+          type: string
+          format: date
+        id_docente:
+          type: integer
+        id_carrera:
+          type: integer
+        docente:
+          $ref: "#/components/schemas/Docente"
+        carrera:
+          $ref: "#/components/schemas/Carrera"
+        estudiantes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProyectoEstudiante"
+        evaluaciones:
+          type: array
+          items:
+            $ref: "#/components/schemas/Evaluacion"
+
+    CreateProyecto:
+      type: object
+      required: [titulo, fecha_registro, id_docente, id_carrera]
+      properties:
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        area_tematica:
+          type: string
+        fecha_registro:
+          type: string
+          format: date
+        id_docente:
+          type: integer
+        id_carrera:
+          type: integer
+
+    UpdateProyecto:
+      type: object
+      properties:
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        area_tematica:
+          type: string
+        fecha_registro:
+          type: string
+          format: date
+        id_docente:
+          type: integer
+        id_carrera:
+          type: integer
+
+    ProyectoEstudiante:
+      type: object
+      properties:
+        id_proyecto:
+          type: integer
+        id_estudiante:
+          type: integer
+        proyecto:
+          $ref: "#/components/schemas/Proyecto"
+        estudiante:
+          $ref: "#/components/schemas/Estudiante"
+
+    CreateProyectoEstudiante:
+      type: object
+      required: [id_proyecto, id_estudiante]
+      properties:
+        id_proyecto:
+          type: integer
+        id_estudiante:
+          type: integer
+
+    Jurado:
+      type: object
+      properties:
+        id_jurado:
+          type: integer
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        institucion:
+          type: string
+          nullable: true
+        especialidad:
+          type: string
+          nullable: true
+        telefono:
+          type: string
+          nullable: true
+        correo:
+          type: string
+          nullable: true
+        evaluaciones:
+          type: array
+          items:
+            $ref: "#/components/schemas/Evaluacion"
+
+    CreateJurado:
+      type: object
+      required: [ci, nombre, apellido]
+      properties:
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        institucion:
+          type: string
+        especialidad:
+          type: string
+        telefono:
+          type: string
+        correo:
+          type: string
+
+    UpdateJurado:
+      type: object
+      properties:
+        ci:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        institucion:
+          type: string
+        especialidad:
+          type: string
+        telefono:
+          type: string
+        correo:
+          type: string
+
+    Criterio:
+      type: object
+      properties:
+        id_criterio:
+          type: integer
+        nombre_criterio:
+          type: string
+        descripcion:
+          type: string
+          nullable: true
+        puntaje_maximo:
+          type: number
+          format: float
+
+    CreateCriterio:
+      type: object
+      required: [nombre_criterio, puntaje_maximo]
+      properties:
+        nombre_criterio:
+          type: string
+        descripcion:
+          type: string
+        puntaje_maximo:
+          type: number
+          format: float
+
+    UpdateCriterio:
+      type: object
+      properties:
+        nombre_criterio:
+          type: string
+        descripcion:
+          type: string
+        puntaje_maximo:
+          type: number
+          format: float
+
+    Evaluacion:
+      type: object
+      properties:
+        id_evaluacion:
+          type: integer
+        id_jurado:
+          type: integer
+        id_proyecto:
+          type: integer
+        fecha_evaluacion:
+          type: string
+          format: date
+        observaciones:
+          type: string
+          nullable: true
+        puntaje_total:
+          type: number
+          format: float
+          nullable: true
+        jurado:
+          $ref: "#/components/schemas/Jurado"
+        proyecto:
+          $ref: "#/components/schemas/Proyecto"
+        detalles:
+          type: array
+          items:
+            $ref: "#/components/schemas/DetalleEvaluacion"
+
+    EvaluacionDetalleItem:
+      type: object
+      required: [id_criterio, puntaje_obtenido]
+      properties:
+        id_criterio:
+          type: integer
+        puntaje_obtenido:
+          type: number
+          format: float
+
+    CreateEvaluacion:
+      type: object
+      required: [id_jurado, id_proyecto, fecha_evaluacion, detalles]
+      properties:
+        id_jurado:
+          type: integer
+        id_proyecto:
+          type: integer
+        fecha_evaluacion:
+          type: string
+          format: date
+        observaciones:
+          type: string
+        detalles:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvaluacionDetalleItem"
+
+    UpdateEvaluacion:
+      type: object
+      properties:
+        id_jurado:
+          type: integer
+        id_proyecto:
+          type: integer
+        fecha_evaluacion:
+          type: string
+          format: date
+        observaciones:
+          type: string
+        detalles:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvaluacionDetalleItem"
+
+    DetalleEvaluacion:
+      type: object
+      properties:
+        id_detalle:
+          type: integer
+        id_evaluacion:
+          type: integer
+        id_criterio:
+          type: integer
+        puntaje_obtenido:
+          type: number
+          format: float
+        evaluacion:
+          $ref: "#/components/schemas/Evaluacion"
+        criterio:
+          $ref: "#/components/schemas/Criterio"
+
+    CreateDetalleEvaluacion:
+      type: object
+      required: [id_evaluacion, id_criterio, puntaje_obtenido]
+      properties:
+        id_evaluacion:
+          type: integer
+        id_criterio:
+          type: integer
+        puntaje_obtenido:
+          type: number
+          format: float
+
+    UpdateDetalleEvaluacion:
+      type: object
+      properties:
+        id_evaluacion:
+          type: integer
+        id_criterio:
+          type: integer
+        puntaje_obtenido:
+          type: number
+          format: float

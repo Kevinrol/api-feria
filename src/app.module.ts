@@ -9,11 +9,21 @@ import { ProyectoModule } from './proyecto/proyecto.module';
 import { JuradoModule } from './jurado/jurado.module';
 import { CriterioModule } from './criterio/criterio.module';
 import { EvaluacionModule } from './evaluacion/evaluacion.module';
+import { ProyectoEstudianteModule } from './proyecto-estudiante/proyecto-estudiante.module';
+import { DetalleEvaluacionModule } from './detalle-evaluacion/detalle-evaluacion.module';
 
 @Module({
   imports: [
     PrismaModule,
-    CarreraModule
+    CarreraModule,
+    EstudianteModule,
+    DocenteModule,
+    ProyectoModule,
+    ProyectoEstudianteModule,
+    JuradoModule,
+    CriterioModule,
+    EvaluacionModule,
+    DetalleEvaluacionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

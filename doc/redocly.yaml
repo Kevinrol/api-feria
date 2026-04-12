@@ -1,0 +1,9 @@
+# Ajustes de lint: rutas con segmentos fijos (`ci`, `carrera`, etc.) son válidas en Nest/Express
+# aunque OpenAPI las marque como ambiguas frente a `{id}`.
+extends:
+  - recommended
+
+rules:
+  no-ambiguous-paths: off
+  operation-4xx-response: off
+  no-server-example.com: off
