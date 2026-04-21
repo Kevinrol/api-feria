@@ -10,6 +10,7 @@ async function bootstrap() {
     transform: true,
     forbidNonWhitelisted: true,
   }));
+  app.enableCors();
   await app.listen(PORT);
   console.log(`Application is running on: http://localhost:${PORT}`);
 }

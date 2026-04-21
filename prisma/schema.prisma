@@ -40,6 +40,7 @@ model Carrera {
   id_carrera     Int    @id @default(autoincrement())
   nombre_carrera String @unique @db.VarChar(100)
   codigo_carrera String @unique @db.VarChar(10)
+  icon           String? @db.VarChar(50)
 
   estudiantes Estudiante[]
   proyectos   Proyecto[]
@@ -77,6 +78,7 @@ model Proyecto {
   titulo         String   @db.VarChar(200)
   descripcion    String?
   area_tematica  String?  @db.VarChar(100)
+  imageSrc       String?  @db.VarChar(255)
   fecha_registro DateTime @db.Date
   id_docente     Int
   id_carrera     Int

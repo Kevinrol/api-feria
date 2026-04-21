@@ -11,6 +11,8 @@ import { CriterioModule } from './criterio/criterio.module';
 import { EvaluacionModule } from './evaluacion/evaluacion.module';
 import { ProyectoEstudianteModule } from './proyecto-estudiante/proyecto-estudiante.module';
 import { DetalleEvaluacionModule } from './detalle-evaluacion/detalle-evaluacion.module';
+import { UsuarioModule } from './usuario/usuario.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { DetalleEvaluacionModule } from './detalle-evaluacion/detalle-evaluacion
     CriterioModule,
     EvaluacionModule,
     DetalleEvaluacionModule,
+    UsuarioModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

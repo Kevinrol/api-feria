@@ -40,6 +40,10 @@ tags:
     description: Puntajes por criterio dentro de una evaluación
   - name: ProyectoEstudiante
     description: Relación N:M proyecto–estudiante
+  - name: Usuario
+    description: Gestión de credenciales
+  - name: Auth
+    description: Autenticación JWT
 
 paths:
   /:
@@ -55,6 +59,27 @@ paths:
               schema:
                 type: string
                 example: Hello World!
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLogin"
+      responses:
+        "201":
+          description: OK (Retorna JWT)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+        "401":
+          description: Credenciales incorrectas
 
   /carrera:
     get:
@@ -1693,3 +1718,38 @@ components:
         puntaje_obtenido:
           type: number
           format: float
+
+    Usuario:
+      type: object
+      properties:
+        id_usuario:
+          type: integer
+        correo:
+          type: string
+        rol:
+          type: string
+          enum: [ADMIN, JURADO, ESTUDIANTE, DOCENTE]
+        id_estudiante:
+          type: integer
+          nullable: true
+        id_docente:
+          type: integer
+          nullable: true
+        id_jurado:
+          type: integer
+          nullable: true
+
+    AuthLogin:
+      type: object
+      required: [correo, password]
+      properties:
+        correo:
+          type: string
+        password:
+          type: string
+          
+    AuthToken:
+      type: object
+      properties:
+        access_token:
+          type: string
