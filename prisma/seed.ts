@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/prisma/client';
+import { PrismaClient, Role } from '../generated/prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 // const __dirname = path.dirname(path.resolve('prisma/seed.ts'));
 
@@ -67,6 +68,7 @@ function randDecimal(min: number, max: number): number {
 
 async function syncSequences(prisma: PrismaClient) {
   const tables: [string, string][] = [
+    ['Usuario',           'id_usuario'],
     ['Carrera',           'id_carrera'],
     ['Criterio',          'id_criterio'],
     ['Docente',           'id_docente'],
@@ -99,6 +101,7 @@ async function main() {
     // ── 1. LIMPIEZA ────────────────────────────────────────────────────────────
     console.log('Limpiando tablas (orden FK)...');
     await prisma.$transaction([
+      prisma.usuario.deleteMany(),
       prisma.detalleEvaluacion.deleteMany(),
       prisma.evaluacion.deleteMany(),
       prisma.proyectoEstudiante.deleteMany(),
@@ -176,6 +179,23 @@ async function main() {
         };
       }),
     });
+
+    // ── 3.5 USUARIOS ───────────────────────────────────────────────────────────
+    console.log('Insertando usuarios (docentes, jurados, estudiantes y admin)...');
+    const defaultPassword = await bcrypt.hash('123456', 10);
+    const usuariosBase: any[] = [
+      {
+        correo: 'admin@incos.edu.bo',
+        password: defaultPassword,
+        rol: Role.ADMIN,
+      },
+    ];
+
+    data.docentes.forEach((d) => usuariosBase.push({ correo: d.email, password: defaultPassword, rol: Role.DOCENTE, id_docente: d.id }));
+    data.jurados.forEach((j) => usuariosBase.push({ correo: j.email, password: defaultPassword, rol: Role.JURADO, id_jurado: j.id }));
+    data.estudiantes.forEach((e) => usuariosBase.push({ correo: `${e.usuario}@estudiante.incos.edu.bo`, password: defaultPassword, rol: Role.ESTUDIANTE, id_estudiante: e.id }));
+
+    await prisma.usuario.createMany({ data: usuariosBase });
 
     // ── 4. PROYECTOS ───────────────────────────────────────────────────────────
     const fechaRegistro = new Date('2024-08-15');
@@ -298,6 +318,7 @@ async function main() {
     console.log(`  Proyectos:    ${data.proyectos.length}`);
     console.log(`  Evaluaciones: ${evaluacionesInput.length}`);
     console.log(`  Detalles:     ${detallesInput.length}`);
+    console.log(`  Usuarios:     ${usuariosBase.length}`);
 
   } finally {
     await prisma.$disconnect();
