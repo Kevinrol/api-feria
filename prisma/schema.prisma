@@ -31,9 +31,9 @@ model Usuario {
   id_docente    Int? @unique
   id_jurado     Int? @unique
 
-  estudiante Estudiante? @relation(fields: [id_estudiante], references: [id_estudiante])
-  docente    Docente?    @relation(fields: [id_docente], references: [id_docente])
-  jurado     Jurado?     @relation(fields: [id_jurado], references: [id_jurado])
+  estudiante Estudiante? @relation(fields: [id_estudiante], references: [id_estudiante], onDelete: Cascade)
+  docente    Docente?    @relation(fields: [id_docente], references: [id_docente], onDelete: Cascade)
+  jurado     Jurado?     @relation(fields: [id_jurado], references: [id_jurado], onDelete: Cascade)
 }
 
 model Carrera {
@@ -55,7 +55,7 @@ model Estudiante {
   correo        String? @db.VarChar(100)
   id_carrera    Int
 
-  carrera   Carrera              @relation(fields: [id_carrera], references: [id_carrera])
+  carrera   Carrera              @relation(fields: [id_carrera], references: [id_carrera], onDelete: Cascade)
   proyectos ProyectoEstudiante[]
   usuario   Usuario?
 }
@@ -83,8 +83,8 @@ model Proyecto {
   id_docente     Int
   id_carrera     Int
 
-  docente      Docente              @relation(fields: [id_docente], references: [id_docente])
-  carrera      Carrera              @relation(fields: [id_carrera], references: [id_carrera])
+  docente      Docente              @relation(fields: [id_docente], references: [id_docente], onDelete: Cascade)
+  carrera      Carrera              @relation(fields: [id_carrera], references: [id_carrera], onDelete: Cascade)
   estudiantes  ProyectoEstudiante[]
   evaluaciones Evaluacion[]
 }
@@ -93,8 +93,8 @@ model ProyectoEstudiante {
   id_proyecto   Int
   id_estudiante Int
 
-  proyecto   Proyecto   @relation(fields: [id_proyecto], references: [id_proyecto])
-  estudiante Estudiante @relation(fields: [id_estudiante], references: [id_estudiante])
+  proyecto   Proyecto   @relation(fields: [id_proyecto], references: [id_proyecto], onDelete: Cascade)
+  estudiante Estudiante @relation(fields: [id_estudiante], references: [id_estudiante], onDelete: Cascade)
 
   @@id([id_proyecto, id_estudiante])
 }
@@ -130,8 +130,8 @@ model Evaluacion {
   observaciones    String?
   puntaje_total    Decimal? @db.Decimal(6, 2)
 
-  jurado   Jurado              @relation(fields: [id_jurado], references: [id_jurado])
-  proyecto Proyecto            @relation(fields: [id_proyecto], references: [id_proyecto])
+  jurado   Jurado              @relation(fields: [id_jurado], references: [id_jurado], onDelete: Cascade)
+  proyecto Proyecto            @relation(fields: [id_proyecto], references: [id_proyecto], onDelete: Cascade)
   detalles DetalleEvaluacion[]
 
   @@unique([id_jurado, id_proyecto])
@@ -143,8 +143,8 @@ model DetalleEvaluacion {
   id_criterio      Int
   puntaje_obtenido Decimal @db.Decimal(5, 2)
 
-  evaluacion Evaluacion @relation(fields: [id_evaluacion], references: [id_evaluacion])
-  criterio   Criterio   @relation(fields: [id_criterio], references: [id_criterio])
+  evaluacion Evaluacion @relation(fields: [id_evaluacion], references: [id_evaluacion], onDelete: Cascade)
+  criterio   Criterio   @relation(fields: [id_criterio], references: [id_criterio], onDelete: Cascade)
 
   @@unique([id_evaluacion, id_criterio])
 }

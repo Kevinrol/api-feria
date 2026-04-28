@@ -13,6 +13,10 @@ export class CreateProyectoDto {
   @IsString()
   area_tematica?: string;
 
+  @IsOptional()
+  @IsString()
+  imageSrc?: string;
+
   @IsDateString()
   @IsNotEmpty()
   fecha_registro: string;
@@ -22,4 +26,8 @@ export class CreateProyectoDto {
 
   @IsInt()
   id_carrera: number;
+
+  @IsOptional()
+  @IsInt({ each: true })
+  estudiantesIds?: number[];
 }

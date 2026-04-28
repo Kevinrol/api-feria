@@ -27,6 +27,11 @@ export class EstudianteController {
     return this.estudianteService.findByCi(ci);
   }
 
+  @Get('carrera/:idCarrera/disponibles')
+  findByCarreraSinProyecto(@Param('idCarrera', ParseIntPipe) idCarrera: number) {
+    return this.estudianteService.findByCarreraSinProyecto(idCarrera);
+  }
+
   @Get('carrera/:idCarrera')
   findByCarrera(@Param('idCarrera', ParseIntPipe) idCarrera: number) {
     return this.estudianteService.findByCarrera(idCarrera);

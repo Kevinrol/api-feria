@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateProyectoDto } from './dto/create-proyecto.dto';
 import { UpdateProyectoDto } from './dto/update-proyecto.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -7,12 +7,44 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ProyectoService {
   constructor(private prisma: PrismaService) {}
 
-  create(createProyectoDto: CreateProyectoDto) {
+  async create(createProyectoDto: CreateProyectoDto) {
+    const { estudiantesIds, ...proyectoData } = createProyectoDto;
+
+    // Si se enviaron estudiantes, validamos que ninguno tenga ya un proyecto
+    if (estudiantesIds && estudiantesIds.length > 0) {
+      for (const idEstudiante of estudiantesIds) {
+        const estudiante = await this.prisma.estudiante.findUnique({
+          where: { id_estudiante: idEstudiante },
+          include: { proyectos: true },
+        });
+        if (!estudiante) {
+          throw new BadRequestException(`El estudiante con ID ${idEstudiante} no existe.`);
+        }
+        if (estudiante.proyectos.length > 0) {
+          throw new BadRequestException(`El estudiante ${estudiante.nombre} ${estudiante.apellido} ya está asignado a un proyecto.`);
+        }
+      }
+    }
+
     return this.prisma.proyecto.create({
-      data: createProyectoDto,
+      data: {
+        ...proyectoData,
+        estudiantes: estudiantesIds
+          ? {
+              create: estudiantesIds.map((id) => ({
+                id_estudiante: id,
+              })),
+            }
+          : undefined,
+      },
       include: {
         carrera: true,
         docente: true,
+        estudiantes: {
+          include: {
+            estudiante: true,
+          },
+        },
       },
     });
   }
@@ -113,7 +145,18 @@ export class ProyectoService {
     });
   }
 
-  agregarEstudiante(idProyecto: number, idEstudiante: number) {
+  async agregarEstudiante(idProyecto: number, idEstudiante: number) {
+    const estudiante = await this.prisma.estudiante.findUnique({
+      where: { id_estudiante: idEstudiante },
+      include: { proyectos: true },
+    });
+    if (!estudiante) {
+      throw new BadRequestException('El estudiante no existe.');
+    }
+    if (estudiante.proyectos.length > 0) {
+      throw new BadRequestException(`El estudiante ${estudiante.nombre} ${estudiante.apellido} ya está asignado a un proyecto.`);
+    }
+
     return this.prisma.proyectoEstudiante.create({
       data: {
         id_proyecto: idProyecto,

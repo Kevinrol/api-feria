@@ -28,7 +28,10 @@ export class AuthService {
       user: {
         id_usuario: user.id_usuario,
         correo: user.correo,
-        rol: user.rol
+        rol: user.rol,
+        id_docente: user.id_docente,
+        id_estudiante: user.id_estudiante,
+        id_jurado: user.id_jurado
       }
     };
   }
