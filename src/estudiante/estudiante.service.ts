@@ -105,4 +105,18 @@ export class EstudianteService {
       },
     });
   }
+
+  findByCarreraSinProyecto(idCarrera: number) {
+    return this.prisma.estudiante.findMany({
+      where: {
+        id_carrera: idCarrera,
+        proyectos: {
+          none: {},
+        },
+      },
+      include: {
+        carrera: true,
+      },
+    });
+  }
 }
